@@ -1,0 +1,49 @@
+name: Build iOS Game Plugin
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Install Theos
+      run: |
+        bash -c "$(curl -fsSL https://raw.githubusercontent.com/theos/theos/master/bin/install-theos)"
+    
+    - name: Setup Xcode
+      uses: maxim-lobanov/setup-xcode@v1
+      with:
+        xcode-version: latest-stable
+    
+    - name: Build Plugin
+      run: |
+        cd iOSGamePlugin
+        export THEOS=$HOME/theos
+        make clean
+        make
+        ls -la .theos/obj/
+    
+    - name: Upload to Release
+      uses: softprops/action-gh-release@v1
+      if: github.event_name == 'push'
+      with:
+        tag_name: v1.0.${{ github.run_number }}
+        name: GamePlugin Build ${{ github.run_number }}
+        body: |
+          iOS游戏插件自动编译版本
+          编译时间: ${{ github.event.head_commit.timestamp }}
+        files: iOSGamePlugin/.theos/obj/*.dylib
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: GamePlugin.dylib
+        path: iOSGamePlugin/.theos/obj/*.dylib
