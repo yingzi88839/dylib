@@ -1,0 +1,35 @@
+name: Build iOS Game Plugin
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Install Theos
+      run: |
+        bash -c "$(curl -fsSL https://raw.githubusercontent.com/theos/theos/master/bin/install-theos)"
+    
+    - name: Build Plugin
+      run: |
+        export THEOS=$HOME/theos
+        make clean
+        make
+        ls -la .theos/obj/
+    
+    - name: Upload to Release
+      uses: softprops/action-gh-release@v1
+      if: github.event_name == 'push'
+      with:
+        tag_name: v1.0.${{ github.run_number }}
+        name: GamePlugin Build ${{ github.run_number }}
+        body: iOS游戏插件自动编译版本
+        files: .theos/obj/*.dylib
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
