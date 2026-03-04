@@ -226,7 +226,25 @@
                                                               preferredStyle:UIAlertControllerStyleAlert];
         [alert addAction:[UIAlertAction actionWithTitle:@"确定" style:UIAlertActionStyleDefault handler:nil]];
         
-        UIViewController *topController = [UIApplication sharedApplication].keyWindow.rootViewController;
+        // 获取最顶层的视图控制器（兼容iOS 13+）
+        UIWindowScene *windowScene = nil;
+        if (@available(iOS 13.0, *)) {
+            for (UIWindowScene *scene in [UIApplication sharedApplication].connectedScenes) {
+                if (scene.activationState == UISceneActivationStateForegroundActive) {
+                    windowScene = scene;
+                    break;
+                }
+            }
+        }
+        
+        UIWindow *window = nil;
+        if (windowScene) {
+            window = windowScene.windows.firstObject;
+        } else {
+            window = [UIApplication sharedApplication].windows.firstObject;
+        }
+        
+        UIViewController *topController = window.rootViewController;
         while (topController.presentedViewController) {
             topController = topController.presentedViewController;
         }
@@ -249,6 +267,20 @@
 - (void)autoClickTapped {
     [self showAlert:@"自动点击已开启"];
     // 这里添加具体的游戏修改逻辑
+}
+
+#pragma mark - 显示/隐藏悬浮窗
+
+- (void)showFloatWindow {
+    if (!self.floatWindow) {
+        [self setupFloatWindow];
+    }
+    self.floatWindow.hidden = NO;
+    [self.floatWindow makeKeyAndVisible];
+}
+
+- (void)hideFloatWindow {
+    self.floatWindow.hidden = YES;
 }
 
 @end
